@@ -2,9 +2,13 @@ import { Router } from 'express';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import { prisma } from '../lib/prisma';
+import * as authController from '../controllers/auth.controller';
+
 
 const router = Router();
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+router.post('/register', authController.register);
 
 router.post('/register', async (req, res) => {
   const { name, email, password } = req.body;
