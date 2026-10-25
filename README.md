@@ -2,7 +2,7 @@
 
 A full-stack inventory system for a car dealership. Users can register, log in, browse and search vehicles, and purchase them. Admins can also add, edit, delete and restock vehicles. The backend was built with Test-Driven Development (Red → Green → Refactor), and the commit history shows each step.
 
-**Live demo:** [add link if deployed]
+**Live demo:** https://car-dealership-inventory-swart.vercel.app/
 
 ## Tech Stack
 
@@ -103,23 +103,43 @@ npm run dev                       # http://localhost:5173
 
 ## Test Report
 
-### Backend (`cd backend && npm test`)
+### Backend: Jest + Supertest (`cd backend && npm run test:coverage`)
 ```
-[paste the summary lines from the output here, e.g.
+PASS  tests/inventory.test.ts
+PASS  tests/vehicles.test.ts
+PASS  tests/vehicles.search.test.ts
+PASS  tests/auth.register.test.ts
+PASS  tests/auth.login.test.ts
+PASS  tests/auth.middleware.test.ts
+PASS  tests/health.test.ts
+
 Test Suites: 7 passed, 7 total
-Tests:       54 passed, 54 total]
-```
-Coverage (`npm run test:coverage`):
-```
-[paste the coverage table]
+Tests:       54 passed, 54 total
 ```
 
-### Frontend (`cd frontend && npm test`)
+| Coverage | Statements | Branches | Functions | Lines |
+|---|---|---|---|---|
+| All files | 89.65% | 79.12% | 97.22% | 89.76% |
+
+| Area | What is tested |
+|---|---|
+| Auth: register | success, hashed password, role can't be injected, missing fields, invalid email, short password, duplicate email |
+| Auth: login | valid token, wrong password, unknown email (same message), missing fields |
+| Middleware | missing, malformed, wrong-secret and expired tokens; user vs admin access |
+| Vehicles CRUD | admin create/update/delete, 403 for users, 401 without token, 404 unknown id, validation errors |
+| Search | make, model, category (partial, case-insensitive), price range, combined filters, invalid price |
+| Inventory | purchase decrements, 400 when out of stock, restock increments, invalid quantities, 403/404 |
+
+### Frontend: Vitest + React Testing Library (`cd frontend && npm test`)
 ```
-[paste the summary, e.g. Tests 9 passed (9)]
+✓ src/components/FilterBar.test.tsx (3 tests)
+✓ src/components/VehicleCard.test.tsx (6 tests)
+
+Test Files  2 passed (2)
+     Tests  9 passed (9)
 ```
 
-The backend tests run against a real PostgreSQL test database rather than mocks, so they cover validation, auth, roles, the database and the HTTP layer together.
+The backend tests run against a real PostgreSQL test database (a separate Neon branch) rather than mocks, so they cover validation, auth, roles, the database and the HTTP layer together.
 
 ## My AI Usage
 
