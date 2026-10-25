@@ -2,13 +2,16 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { vehicleApi } from '../api/vehicles';
 import { useAuth } from '../context/AuthContext';
 import { Navbar } from '../components/Navbar';
+import { Hero } from '../components/Hero';
 import { Reveal } from '../components/Reveal';
 import { FilterBar } from '../components/FilterBar';
 import { VehicleCard } from '../components/VehicleCard';
 import { VehicleFormModal } from '../components/VehicleFormModal';
+import { ConfirmDialog } from '../components/ConfirmDialog';
 import type { SearchFilters, Vehicle, VehicleInput } from '../types';
 
 type Toast = { message: string; type: 'success' | 'error' };
+type PendingConfirm = { title: string; message: string; label: string; run: () => void };
 
 export default function GaragePage() {
   const { isAdmin } = useAuth();
@@ -20,6 +23,7 @@ export default function GaragePage() {
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [toast, setToast] = useState<Toast | null>(null);
+  const [pendingConfirm, setPendingConfirm] = useState<PendingConfirm | null>(null);
   // undefined = modal closed, null = adding new, Vehicle = editing
   const [editing, setEditing] = useState<Vehicle | null | undefined>(undefined);
 
@@ -76,16 +80,25 @@ export default function GaragePage() {
     }
   };
 
+  // Purchase now asks for confirmation first
   const handlePurchase = (v: Vehicle) =>
-    runAction(v.id, () => vehicleApi.purchase(v.id), `${v.make} ${v.model} is yours!`);
+    setPendingConfirm({
+      title: 'CONFIRM PURCHASE',
+      message: `Buy the ${v.make} ${v.model} for $${v.price.toLocaleString('en-US')}?`,
+      label: '▸ BUY NOW',
+      run: () => runAction(v.id, () => vehicleApi.purchase(v.id), `${v.make} ${v.model} is yours!`),
+    });
 
   const handleRestock = (v: Vehicle, quantity: number) =>
     runAction(v.id, () => vehicleApi.restock(v.id, quantity), `${v.model} restocked +${quantity}`);
 
-  const handleDelete = (v: Vehicle) => {
-    if (!window.confirm(`Delete ${v.make} ${v.model}?`)) return;
-    runAction(v.id, () => vehicleApi.remove(v.id), `${v.model} deleted`);
-  };
+  const handleDelete = (v: Vehicle) =>
+    setPendingConfirm({
+      title: 'DELETE VEHICLE',
+      message: `Remove the ${v.make} ${v.model} from inventory? This can't be undone.`,
+      label: 'DELETE',
+      run: () => runAction(v.id, () => vehicleApi.remove(v.id), `${v.model} deleted`),
+    });
 
   // Errors are thrown back to the modal so it can show them
   const handleSave = async (data: VehicleInput) => {
@@ -100,27 +113,7 @@ export default function GaragePage() {
     <div className="min-h-screen bg-ink">
       <Navbar />
 
-      {/* HERO */}
-      <section id="top" className="relative flex min-h-[88vh] items-center overflow-hidden border-b border-line">
-        <div className="animate-ken-burns absolute inset-0 bg-[url('/hero.jpg')] bg-cover bg-center" aria-hidden="true" />
-        <div className="absolute inset-0 bg-linear-to-r from-ink via-ink/80 to-ink/30" aria-hidden="true" />
-        <div className="relative mx-auto w-full max-w-7xl px-5 py-24">
-          <p className="font-mono text-cyan sm:text-lg">
-            &gt; PLAYER 1 READY<span className="animate-blink">_</span>
-          </p>
-          <h1 className="animate-slide-in mt-6 font-display text-5xl font-black leading-[0.95] sm:text-7xl lg:text-8xl">
-            SELECT
-            <br />
-            <span className="glow-cyan text-cyan">YOUR RIDE</span>
-          </h1>
-          <p className="mt-8 max-w-xl text-xl text-muted">
-            {allVehicles.length} machines on the lot. Filter by make, model or budget and take one home.
-          </p>
-          <a href="#garage" className="clip-btn mt-10 inline-flex min-h-14 items-center bg-nitro px-8 font-display font-bold tracking-widest text-ink transition hover:brightness-110">
-            ▸ PRESS START
-          </a>
-        </div>
-      </section>
+      <Hero vehicleCount={allVehicles.length} />
 
       {/* GARAGE */}
       <section id="garage" className="grid-bg scroll-mt-20">
@@ -206,6 +199,19 @@ export default function GaragePage() {
 
       {editing !== undefined && (
         <VehicleFormModal vehicle={editing} onClose={() => setEditing(undefined)} onSave={handleSave} />
+      )}
+
+      {pendingConfirm && (
+        <ConfirmDialog
+          title={pendingConfirm.title}
+          message={pendingConfirm.message}
+          confirmLabel={pendingConfirm.label}
+          onConfirm={() => {
+            pendingConfirm.run();
+            setPendingConfirm(null);
+          }}
+          onCancel={() => setPendingConfirm(null)}
+        />
       )}
 
       {toast && (
