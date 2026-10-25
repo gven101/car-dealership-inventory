@@ -65,3 +65,28 @@ export async function deleteVehicle(id: string) {
   await findVehicleOrThrow(id);
   await prisma.vehicle.delete({ where: { id } });
 }
+export async function purchaseVehicle(id: string) {
+  // Atomic: only decrements if quantity > 0, in ONE database query.
+  // Prevents two simultaneous buyers taking the last car.
+  const result = await prisma.vehicle.updateMany({
+    where: { id, quantity: { gt: 0 } },
+    data: { quantity: { decrement: 1 } },
+  });
+
+  if (result.count === 0) {
+    await findVehicleOrThrow(id); // 404 if it doesn't exist
+    throw new AppError(400, 'Vehicle is out of stock');
+  }
+  return findVehicleOrThrow(id);
+}
+
+export async function restockVehicle(id: string, quantity: unknown) {
+  if (!Number.isInteger(quantity) || (quantity as number) <= 0) {
+    throw new AppError(400, 'quantity must be a positive integer');
+  }
+  await findVehicleOrThrow(id);
+  return prisma.vehicle.update({
+    where: { id },
+    data: { quantity: { increment: quantity as number } },
+  });
+}

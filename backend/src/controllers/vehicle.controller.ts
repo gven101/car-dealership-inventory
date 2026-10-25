@@ -17,3 +17,10 @@ export async function remove(req: Request, res: Response) {
   await vehicleService.deleteVehicle(req.params.id);
   res.status(204).send();
 }
+export async function purchase(req: Request, res: Response) {
+  res.json(await vehicleService.purchaseVehicle(req.params.id));
+}
+
+export async function restock(req: Request, res: Response) {
+  res.json(await vehicleService.restockVehicle(req.params.id, req.body?.quantity));
+}
