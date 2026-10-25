@@ -1,0 +1,52 @@
+@import "tailwindcss";
+
+/* Design tokens → Tailwind classes like bg-ink, text-cyan, font-display */
+@theme {
+  --color-ink: #04070c;
+  --color-panel: #0a1119;
+  --color-line: #16212c;
+  --color-fg: #e8eef3;
+  --color-muted: #8b98a7;
+  --color-cyan: #5ce1e6;
+  --color-nitro: #f07c3e;
+  --color-lime: #9be564;
+  --font-display: "Orbitron", sans-serif;
+  --font-body: "Rajdhani", sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+}
+
+@layer base {
+  html { scroll-behavior: smooth; }
+  body { background: var(--color-ink); color: var(--color-fg); font-family: var(--font-body); }
+}
+
+.grid-bg {
+  background-image:
+    linear-gradient(rgba(92, 225, 230, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(92, 225, 230, 0.05) 1px, transparent 1px);
+  background-size: 96px 96px;
+}
+.clip-corner { clip-path: polygon(18px 0, 100% 0, 100% calc(100% - 18px), calc(100% - 18px) 100%, 0 100%, 0 18px); }
+.clip-btn { clip-path: polygon(14px 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%, 0 14px); }
+.glow-cyan { text-shadow: 0 0 24px rgba(92, 225, 230, 0.6); }
+.glow-box { box-shadow: 0 0 22px rgba(92, 225, 230, 0.45); }
+.scanlines { background-image: repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.035) 0 1px, transparent 1px 4px); }
+
+/* Scroll reveal: hidden until Reveal adds .is-visible */
+.reveal { opacity: 0; transform: translateY(40px); transition: opacity 0.7s ease, transform 0.7s cubic-bezier(0.2, 0.8, 0.2, 1); }
+.reveal.is-visible { opacity: 1; transform: none; }
+
+@keyframes slide-in { from { opacity: 0; transform: translateX(-60px); } to { opacity: 1; transform: none; } }
+@keyframes blink { 50% { opacity: 0; } }
+@keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+@keyframes ken-burns { from { transform: scale(1.08); } to { transform: scale(1); } }
+.animate-slide-in { animation: slide-in 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+.animate-blink { animation: blink 1s steps(1) infinite; }
+.animate-float { animation: float 3s ease-in-out infinite; }
+.animate-ken-burns { animation: ken-burns 6s ease-out both; }
+
+/* Respect users who turn off motion */
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; }
+  .reveal { opacity: 1; transform: none; }
+}
