@@ -46,8 +46,40 @@ async function findVehicleOrThrow(id: string) {
   return vehicle;
 }
 
+/** Returns a trimmed string, or undefined if empty / not a string. */
+function textFilter(value: unknown) {
+  return typeof value === 'string' && value.trim() ? value.trim() : undefined;
+}
+
+function priceFilter(value: unknown, name: string) {
+  if (value === undefined || value === '') return undefined;
+  const num = Number(value);
+  if (typeof value !== 'string' || Number.isNaN(num) || num < 0) {
+    throw new AppError(400, `${name} must be a non-negative number`);
+  }
+  return num;
+}
+
 export function listVehicles() {
   return prisma.vehicle.findMany({ orderBy: { createdAt: 'desc' } });
+}
+
+export function searchVehicles(query: Record<string, unknown>) {
+  const where: Prisma.VehicleWhereInput = {};
+
+  for (const field of TEXT_FIELDS) {
+    const value = textFilter(query[field]);
+    // contains + insensitive = partial, case-insensitive match
+    if (value) where[field] = { contains: value, mode: 'insensitive' };
+  }
+
+  const minPrice = priceFilter(query.minPrice, 'minPrice');
+  const maxPrice = priceFilter(query.maxPrice, 'maxPrice');
+  if (minPrice !== undefined || maxPrice !== undefined) {
+    where.price = { gte: minPrice, lte: maxPrice };
+  }
+
+  return prisma.vehicle.findMany({ where, orderBy: { createdAt: 'desc' } });
 }
 
 export function createVehicle(input: Record<string, unknown>) {
@@ -65,6 +97,7 @@ export async function deleteVehicle(id: string) {
   await findVehicleOrThrow(id);
   await prisma.vehicle.delete({ where: { id } });
 }
+
 export async function purchaseVehicle(id: string) {
   // Atomic: only decrements if quantity > 0, in ONE database query.
   // Prevents two simultaneous buyers taking the last car.
