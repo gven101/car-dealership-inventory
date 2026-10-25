@@ -39,5 +39,5 @@ router.post('/register', async (req, res) => {
   const token = jwt.sign({ id: user.id, role: user.role }, process.env.JWT_SECRET as string, { expiresIn: '1d' });
   res.status(201).json({ token, user: { id: user.id, name: user.name, email: user.email, role: user.role } });
 });
-
+router.post('/login', authController.login);
 export default router;

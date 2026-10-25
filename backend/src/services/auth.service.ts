@@ -48,3 +48,22 @@ export async function register(input: RegisterInput) {
 
   return { token: signToken(user), user: toPublicUser(user) };
 }
+export interface LoginInput {
+  email?: string;
+  password?: string;
+}
+
+const INVALID_CREDENTIALS = 'Invalid email or password';
+
+export async function login({ email, password }: LoginInput) {
+  if (!email || !password) throw new AppError(400, 'Email and password are required');
+
+  const user = await prisma.user.findUnique({ where: { email } });
+  // Same error for unknown email and wrong password, so emails can't be discovered
+  if (!user) throw new AppError(401, INVALID_CREDENTIALS);
+
+  const passwordMatches = await bcrypt.compare(password, user.password);
+  if (!passwordMatches) throw new AppError(401, INVALID_CREDENTIALS);
+
+  return { token: signToken(user), user: toPublicUser(user) };
+}
